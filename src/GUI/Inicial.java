@@ -25,7 +25,6 @@ public class Inicial extends javax.swing.JFrame {
     String diretorio = null;
     String destino = null;
     int execucao = 1;
-    Metodos metodos = new Metodos();
 
     public Inicial() {
         initComponents();
@@ -44,7 +43,7 @@ public class Inicial extends javax.swing.JFrame {
         jbExecutar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Consuelo System");
+        setTitle("Consuelo System - Sequencial");
 
         jbAbrir.setText("Abrir");
         jbAbrir.addActionListener(new java.awt.event.ActionListener() {
@@ -161,17 +160,20 @@ public class Inicial extends javax.swing.JFrame {
     }//GEN-LAST:event_jbDestinoActionPerformed
 
     private void jbExecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbExecutarActionPerformed
-        if (!lista_CImagens.isEmpty()) {
+        if (lista_CImagens.isEmpty()) {
             jTextArea1.setText(jTextArea1.getText() + "\nNenhuma imagem selecionada");
         } else if (destino == null) {
             jTextArea1.setText(jTextArea1.getText() + "\nNenhum destino selecionado");
         } else {
             try {
                 jTextArea1.setText(jTextArea1.getText() + "\nRealizando Filtros");
-
-                int cont = 1;
-
+                int cont;
+                double tempo_inicial=System.currentTimeMillis();
                 for (int i = 0; i < lista_CImagens.size(); i++) {
+                    execucao=1;
+                    cont=1;
+                    
+                    Metodos metodos = new Metodos();
                     ArrayList<MatImagem> lista_img = new ArrayList<MatImagem>();
                     MatImagem img = new MatImagem(Imgcodecs.imread(lista_CImagens.get(i).getCaminho()), lista_CImagens.get(i).getNome());
                     lista_img.add(img);
@@ -196,17 +198,18 @@ public class Inicial extends javax.swing.JFrame {
                     lista_img = metodos.Dilatacao(lista_img, execucao, destino, cont);
                     cont++;
                     execucao++;
-                    lista_img = metodos.Dilatacao(lista_img, execucao, destino, cont);
+                    lista_img = metodos.Dilatacao2(lista_img, execucao, destino, cont);
                     cont++;
                     execucao++;
 
                 }
-
+                Metodos metodos = new Metodos();
                 metodos.ReconhecerDigitos(execucao, destino, 8);
                 execucao++;
+                double tempo_final=System.currentTimeMillis();
 
-                execucao++;
-
+                System.out.println(tempo_final-tempo_inicial);
+                
                 jTextArea1.setText(jTextArea1.getText() + "\nFinalizado");
 
             } catch (Exception ex) {

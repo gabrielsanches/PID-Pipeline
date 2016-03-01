@@ -88,13 +88,13 @@ public class Metodos {
         for (MatImagem img : lista) {
             Mat imagem = img.getImg();
             Mat Img_new = new Mat(imagem.rows(), imagem.cols(), CvType.CV_8UC1);
-            File output = new File(destino + "/Etapa" + etapa + "_TonsCinza/"+img.getNome() + "_" + execucao + ".bmp");
-            
+            File output = new File(destino + "/Etapa" + etapa + "_TonsCinza/" + img.getNome() + "_" + execucao + ".bmp");
+
             Imgproc.cvtColor(imagem, Img_new, Imgproc.COLOR_RGB2GRAY);
             //ImageIO.write(mat2Img(Img_new), "bmp", output);
             MatImagem image = new MatImagem(Img_new, img.getNome());
             imagens.add(image);
-        }
+        }       
         return imagens;
     }
 
@@ -104,7 +104,7 @@ public class Metodos {
         //a.mkdir();
         for (MatImagem img : lista) {
             Mat Img_new = img.getImg();
-            File output = new File(destino + "/Etapa" + etapa + "_Gaussian_Adaptativo/"+ img.getNome() + "_" + execucao + ".bmp");
+            File output = new File(destino + "/Etapa" + etapa + "_Gaussian_Adaptativo/" + img.getNome() + "_" + execucao + ".bmp");
 
             Imgproc.adaptiveThreshold(Img_new, Img_new, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 4);
             //ImageIO.write(mat2Img(Img_new), "bmp", output);
@@ -120,7 +120,7 @@ public class Metodos {
         //a.mkdir();
         for (MatImagem img : lista) {
             Mat Img_new = img.getImg();
-            File output = new File(destino + "/Etapa" + etapa + "_Otsu/"+ img.getNome() + "_" + execucao + ".bmp");
+            File output = new File(destino + "/Etapa" + etapa + "_Otsu/" + img.getNome() + "_" + execucao + ".bmp");
 
             Imgproc.GaussianBlur(Img_new, Img_new, new Size(5, 5), 5);
             Imgproc.threshold(Img_new, Img_new, 0, 255, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
@@ -128,6 +128,7 @@ public class Metodos {
 
             MatImagem image = new MatImagem(Img_new, img.getNome());
             imagens.add(image);
+            
         }
         return imagens;
     }
@@ -207,9 +208,7 @@ public class Metodos {
             }
 
             //ImageIO.write(mat2Img(ImgCor_new), "bmp", new File(destino + "\\Etapa" + etapa + "_Contorno" +thread+ "\\" + arqOriginal + "_" + index + ".bmp"));
-
         }
-
         return imagens;
     }
 
@@ -242,7 +241,7 @@ public class Metodos {
     public ArrayList<MatImagem> Dilatacao(ArrayList<MatImagem> lista, int execucao, String destino, int etapa) throws IOException {
 
         ArrayList<MatImagem> imagens = new ArrayList<MatImagem>();
-        File a = new File(destino + "/Etapa" + etapa + "_Dilatacao");
+        File a = new File(destino + "/Etapa" + etapa + "_Dilatacao1");
         a.mkdir();
         int index = 0;
         for (MatImagem img : lista) {
@@ -256,12 +255,40 @@ public class Metodos {
             }
             Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
             Imgproc.dilate(imagem, Img_new, element);
-            ImageIO.write(mat2Img(Img_new), "bmp", new File(destino + "\\Etapa" + etapa + "_Dilatacao\\" + arqOriginal + "_Figura" + "_" + index + ".bmp"));
+            ImageIO.write(mat2Img(Img_new), "bmp", new File(destino + "\\Etapa" + etapa + "_Dilatacao1\\" + arqOriginal + "_Figura" + "_" + index + ".bmp"));
             MatImagem image = new MatImagem(Img_new, img.getNome());
             imagens.add(image);
             index++;
         }
+        File pasta=new File(destino + "\\Etapa" + 5 + "_Tickets");
+        removerArquivos(pasta);
+        return imagens;
+    }
+    
+        public ArrayList<MatImagem> Dilatacao2(ArrayList<MatImagem> lista, int execucao, String destino, int etapa) throws IOException {
 
+        ArrayList<MatImagem> imagens = new ArrayList<MatImagem>();
+        File a = new File(destino + "/Etapa" + etapa + "_Dilatacao2");
+        a.mkdir();
+        int index = 0;
+        for (MatImagem img : lista) {
+            String arqOriginal = img.getNome();
+
+            Mat imagem = img.getImg();
+            Mat Img_new = new Mat(imagem.rows(), imagem.cols(), imagem.type());
+            imagem.copyTo(Img_new);
+            if (index == 36) {
+                index = 0;
+            }
+            Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
+            Imgproc.dilate(imagem, Img_new, element);
+            ImageIO.write(mat2Img(Img_new), "bmp", new File(destino + "\\Etapa" + etapa + "_Dilatacao2\\" + arqOriginal + "_Figura" + "_" + index + ".bmp"));
+            MatImagem image = new MatImagem(Img_new, img.getNome());
+            imagens.add(image);
+            index++;
+        }
+        File pasta=new File(destino + "/Etapa" + (etapa-1) + "_Dilatacao1");
+        removerArquivos(pasta);
         return imagens;
     }
 
@@ -275,7 +302,7 @@ public class Metodos {
         ArrayList<MatImagem> imagens = new ArrayList<MatImagem>();
         int index = 0;
 
-        File b = new File(destino + "/Etapa" + etapa + "_Dilatacao");
+        File b = new File(destino + "/Etapa" + etapa + "_Dilatacao2");
         File[] c = b.listFiles();
 
         FileWriter fw = new FileWriter("resultado.txt");
@@ -323,6 +350,19 @@ public class Metodos {
             }
         }
         return count;
+    }
+
+    public static void removerArquivos(File f) {
+        // Se o arquivo passado for um diretório
+        if (f.isDirectory()) {
+            /* Lista todos os arquivos do diretório em um array 
+                   de objetos File */
+            File[] files = f.listFiles();
+            // Identa a lista (foreach) e deleta um por um
+            for (File file : files) {
+                file.delete();
+            }
+        }
     }
 
 }
