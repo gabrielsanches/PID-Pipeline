@@ -1,6 +1,8 @@
 package GUI;
 
+import Metodos.CaminhoImg;
 import Metodos.Imagem;
+import Metodos.MatImagem;
 import Metodos.Metodos;
 import Metodos.Ponto;
 import java.io.File;
@@ -10,10 +12,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
+import net.sourceforge.tess4j.TesseractException;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 public class Inicial extends javax.swing.JFrame {
 
     ArrayList<Imagem> lista = new ArrayList<>();
+    ArrayList<CaminhoImg> lista_CImagens = new ArrayList<>();
+    ArrayList<MatImagem> lista_imagens = new ArrayList<>();
     String diretorio = null;
     String destino = null;
     int execucao = 1;
@@ -112,9 +120,11 @@ public class Inicial extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jbAbrirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbAbrirActionPerformed
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         lista = new ArrayList<>();
         final JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setCurrentDirectory(new File("C:\\Users\\Gabriel-PC\\Documents\\PID6\\PID\\Entrada"));
         final int returnVal = chooser.showDialog(null, "Escolher Pasta");
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -128,8 +138,9 @@ public class Inicial extends javax.swing.JFrame {
                     File arquivos = afile[i];
                     if (arquivos.getName().substring(arquivos.getName().length() - 4).equals(".bmp")) {
                         jTextArea1.setText(jTextArea1.getText() + "\nAbrindo arquivo: " + arquivos.getName());
-                        Imagem img = new Imagem(ImageIO.read(arquivos), arquivos.getName().substring(0, arquivos.getName().length() - 4));
-                        lista.add(img);
+                        //Mat source = Imgcodecs.imread(jtAbrir.getText().replace("\\", "\\\\") + "\\\\" + arquivos.getName());
+                        lista_CImagens.add(new CaminhoImg(jtAbrir.getText().replace("\\", "\\\\") + "\\\\" + arquivos.getName(), arquivos.getName().substring(0, arquivos.getName().length() - 4)));
+                        //lista_imagens.add(new MatImagem(source, arquivos.getName().substring(0, arquivos.getName().length() - 4)));
                     }
                 }
             } catch (final Exception ioException) {
@@ -141,6 +152,7 @@ public class Inicial extends javax.swing.JFrame {
     private void jbDestinoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbDestinoActionPerformed
         final JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setCurrentDirectory(new File("C:\\Users\\Gabriel-PC\\Documents\\PID6\\PID\\Saida"));
         final int returnVal = chooser.showDialog(null, "Escolher Pasta de Saída");
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             destino = chooser.getSelectedFile().getAbsolutePath();
@@ -149,36 +161,55 @@ public class Inicial extends javax.swing.JFrame {
     }//GEN-LAST:event_jbDestinoActionPerformed
 
     private void jbExecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbExecutarActionPerformed
-        if (lista.isEmpty()) {
+        if (!lista_CImagens.isEmpty()) {
             jTextArea1.setText(jTextArea1.getText() + "\nNenhuma imagem selecionada");
         } else if (destino == null) {
             jTextArea1.setText(jTextArea1.getText() + "\nNenhum destino selecionado");
         } else {
             try {
-                jTextArea1.setText(jTextArea1.getText() + "\nTransformando para tons de cinza");
-                lista = metodos.EscalaCinza(lista, execucao, destino);
-                execucao++;
-                
-                jTextArea1.setText(jTextArea1.getText() + "\nLimiarizando");
-                lista = metodos.Limiarizacao(lista, execucao, destino);
-                
-                execucao++;
-                jTextArea1.setText(jTextArea1.getText() + "\nRecortando");
-                
-                lista = metodos.Recortar(lista, execucao, destino, metodos.capturarRecorte(metodos.varreduraLinha(lista, execucao, destino,120), metodos.varreduraColuna(lista, execucao, destino,120)));
-                execucao++;
-                
-//                jTextArea1.setText(jTextArea1.getText() + "\nCalculando Mediana");
-//                lista = metodos.Mediana(lista, execucao, destino);
-//                execucao++;
+                jTextArea1.setText(jTextArea1.getText() + "\nRealizando Filtros");
 
-                //jTextArea1.setText(jTextArea1.getText() + "\nLimiarizando");
-                //lista = metodos.Limiarizacao(lista, execucao, destino);
-                
-                lista = metodos.Recortar2(lista, execucao, destino, metodos.capturarRecorte1(metodos.varreduraLinha(lista, execucao, destino,200), metodos.varreduraColuna(lista, execucao, destino,200)));
+                int cont = 1;
+
+                for (int i = 0; i < lista_CImagens.size(); i++) {
+                    ArrayList<MatImagem> lista_img = new ArrayList<MatImagem>();
+                    MatImagem img = new MatImagem(Imgcodecs.imread(lista_CImagens.get(i).getCaminho()), lista_CImagens.get(i).getNome());
+                    lista_img.add(img);
+                    lista_img = metodos.TonsCinza(lista_img, execucao, destino, cont);
+                    execucao++;
+                    cont++;
+                    lista_img = metodos.Gaussian_Adp(lista_img, execucao, destino, cont);
+                    cont++;
+                    execucao++;
+                    lista_img = metodos.Otsu(lista_img, execucao, destino, cont);
+                    execucao++;
+                    cont++;
+                    lista_img = metodos.Otsu(lista_img, execucao, destino, cont);
+                    execucao++;
+                    cont++;
+                    lista_img = metodos.identificarContornos(lista_img, execucao, destino, cont);
+                    execucao++;
+                    cont++;
+                    lista_img = metodos.Erosao(lista_img, execucao, destino, cont);
+                    cont++;
+                    execucao++;
+                    lista_img = metodos.Dilatacao(lista_img, execucao, destino, cont);
+                    cont++;
+                    execucao++;
+                    lista_img = metodos.Dilatacao(lista_img, execucao, destino, cont);
+                    cont++;
+                    execucao++;
+
+                }
+
+                metodos.ReconhecerDigitos(execucao, destino, 8);
                 execucao++;
-                //listinha=metodos.CorrigeInclinacao(listinha, execucao, destino);
-            } catch (IOException ex) {
+
+                execucao++;
+
+                jTextArea1.setText(jTextArea1.getText() + "\nFinalizado");
+
+            } catch (Exception ex) {
                 Logger.getLogger(Inicial.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
